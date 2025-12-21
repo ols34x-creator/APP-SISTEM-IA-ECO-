@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ec.Day - Calendário Financeiro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #0f172a; /* Matching App Dark Theme */
+            color: #cbd5e1;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: #1e293b;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #334155;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+        
+        h1 i {
+            margin-right: 12px;
+            color: #14b8a6; /* Primary Color */
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary { background-color: #14b8a6; color: white; }
+        .btn-primary:hover { background-color: #0d9488; }
+        
+        .btn-secondary { background-color: #3b82f6; color: white; }
+        .btn-secondary:hover { background-color: #2563eb; }
+        
+        .btn-export { background-color: #f59e0b; color: white; }
+        .btn-export:hover { background-color: #d97706; }
+        
+        .btn-print { background-color: #8b5cf6; color: white; }
+        .btn-print:hover { background-color: #7c3aed; }
+        
+        .btn-filter { background-color: #10b981; color: white; }
+        .btn-filter:hover { background-color: #059669; }
+        
+        /* Navegação do Calendário */
+        .calendar-nav {
+            background-color: #1e293b;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .period-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+            border: 1px solid #334155;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .current-period {
+            font-size: 1.2rem;
+            font-weight: 600;
+            min-width: 180px;
+            text-align: center;
+            color: #f8fafc;
+        }
+        
+        .quick-nav {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-nav-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+            border: 1px solid #334155;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .quick-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        
+        .filter-select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            padding: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 1200px;
+        }
+        
+        thead th {
+            background-color: #0f172a;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            color: #94a3b8;
+            border-bottom: 1px solid #334155;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .week-header {
+            background-color: #3b82f6;
+            color: white;
+            font-size: 1rem;
+            padding: 8px;
+            text-align: center;
+            border-radius: 6px;
+            margin-bottom: 5px;
+        }
+        
+        .day-header {
+            background-color: #1e293b;
+            padding: 8px;
+            text-align: center;
+            font-weight: 600;
+            color: #e2e8f0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .date-display {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        tbody td {
+            border: 1px solid #334155;
+            padding: 10px;
+            vertical-align: top;
+            height: 160px;
+            background-color: #1e293b;
+            transition: all 0.2s ease;
+        }
+        
+        tbody td:hover {
+            background-color: #273548;
+        }
+        
+        .today-cell {
+            background-color: #1e293b !important;
+            border: 2px solid #14b8a6 !important;
+        }
+        
+        .finance-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .field-group {
+            padding: 8px;
+            border-radius: 6px;
+            position: relative;
+        }
+        
+        .field-income {
+            background-color: rgba(34, 197, 94, 0.1);
+            border-left: 3px solid #22c55e;
+        }
+        
+        .field-expense {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid #ef4444;
+        }
+        
+        .field-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .field-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+        
+        .edit-btn {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .edit-btn:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        .total-cell {
+            background-color: #0f172a;
+            padding: 15px;
+            border-right: 1px solid #334155;
+        }
+        
+        .week-total {
+            padding: 15px;
+            background-color: #1e293b;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .total-row {
+            margin: 6px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .total-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        
+        .total-income { color: #22c55e; font-weight: 700; }
+        .total-expense { color: #ef4444; font-weight: 700; }
+        
+        .total-balance {
+            color: #f1f5f9;
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #475569;
+        }
+        
+        .positive-balance { color: #22c55e; }
+        .negative-balance { color: #ef4444; }
+        
+        .mini-chart {
+            margin-top: 10px;
+            height: 60px;
+            width: 100%;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal {
+            background-color: #1e293b;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            padding: 25px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid #334155;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 15px;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #64748b;
+            cursor: pointer;
+        }
+        
+        .close-modal:hover { color: #ef4444; }
+        
+        .form-group { margin-bottom: 15px; }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: #0f172a;
+            color: white;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        .btn-cancel { background-color: #334155; color: #cbd5e1; }
+        .btn-cancel:hover { background-color: #475569; }
+        
+        .btn-save { background-color: #14b8a6; color: white; }
+        .btn-save:hover { background-color: #0d9488; }
+        
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #0f172a;
+            border-top: 1px solid #334155;
+        }
+        
+        .stat-card {
+            background: #1e293b;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 160px;
+            border: 1px solid #334155;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+        
+        .stat-label { font-size: 0.8rem; color: #94a3b8; }
+        .stat-income { color: #22c55e; }
+        .stat-expense { color: #ef4444; }
+        .stat-balance { color: #3b82f6; }
+        
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .month-btn {
+            padding: 10px;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            background: #0f172a;
+            color: #cbd5e1;
+            cursor: pointer;
+        }
+        
+        .month-btn:hover { background-color: #1e293b; }
+        .month-btn.active { background-color: #3b82f6; color: white; border-color: #3b82f6; }
+        
+        .year-selector {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        @media print {
+            body { background-color: white; color: black; }
+            .container { box-shadow: none; border: none; }
+            .btn, .edit-btn, .controls, .calendar-nav, .modal-overlay { display: none !important; }
+            .table-container { overflow: visible; }
+            tbody td { height: auto; border: 1px solid #ddd; background: white; color: black; }
+            .week-header { color: black; background: #eee; }
+            .field-value { color: black; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-calendar-check"></i> Ec.Day - Calendário Financeiro</h1>
+            <div class="controls">
+                <button class="btn btn-primary" id="addWeekBtn"><i class="fas fa-plus"></i> Semana</button>
+                <button class="btn btn-secondary" id="addYearBtn"><i class="fas fa-calendar-plus"></i> Ano</button>
+                <button class="btn btn-filter" id="jumpToBtn"><i class="fas fa-calendar-day"></i> Navegar</button>
+                <button class="btn btn-print" id="printBtn"><i class="fas fa-print"></i> Imprimir</button>
+                <button class="btn btn-export" id="exportExcelBtn"><i class="fas fa-file-excel"></i> Excel</button>
+            </div>
+        </header>
+        
+        <div class="calendar-nav">
+            <div class="period-controls">
+                <button class="nav-btn" id="prevYearBtn" title="Ano Anterior"><i class="fas fa-angle-double-left"></i></button>
+                <button class="nav-btn" id="prevMonthBtn" title="Mês Anterior"><i class="fas fa-angle-left"></i></button>
+                <div class="current-period" id="currentPeriod">Janeiro 2024</div>
+                <button class="nav-btn" id="nextMonthBtn" title="Próximo Mês"><i class="fas fa-angle-right"></i></button>
+                <button class="nav-btn" id="nextYearBtn" title="Próximo Ano"><i class="fas fa-angle-double-right"></i></button>
+            </div>
+            
+            <div class="quick-nav">
+                <button class="quick-nav-btn" id="goTodayBtn">Hoje</button>
+                <button class="quick-nav-btn" id="goCurrentMonthBtn">Este Mês</button>
+            </div>
+            
+            <div class="filters">
+                <div class="filter-group">
+                    <span class="filter-label">Ano:</span>
+                    <select class="filter-select" id="yearFilter"></select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Visualização:</span>
+                    <select class="filter-select" id="viewFilter">
+                        <option value="all">Todas as semanas</option>
+                        <option value="month">Apenas este mês</option>
+                        <option value="quarter">Trimestre</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="summary-stats" id="summaryStats">
+            <!-- Stats populated by JS -->
+        </div>
+        
+        <div class="table-container" id="tableContainer">
+            <!-- Table generated by JS -->
+        </div>
+        
+        <div class="chart-container" style="padding: 20px;">
+            <canvas id="overviewChart" height="80"></canvas>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div class="modal-overlay" id="jumpModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Navegação Rápida</h3>
+                <button class="close-modal" id="closeJumpModal">&times;</button>
+            </div>
+            <div class="year-selector">
+                <button class="nav-btn" id="prevYearJump"><i class="fas fa-chevron-left"></i></button>
+                <div style="font-size: 1.2rem; font-weight: bold; color: white;" id="jumpYear">2024</div>
+                <button class="nav-btn" id="nextYearJump"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="month-grid" id="monthGrid"></div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-cancel" id="cancelJump">Cancelar</button>
+                <button type="button" class="btn btn-save" id="goToDate">Ir</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Editar Valores</h3>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <form id="editForm">
+                <div class="form-group">
+                    <label class="form-label">Data</label>
+                    <input type="text" class="form-input" id="editDate" readonly disabled style="opacity: 0.5;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receita (R$)</label>
+                    <input type="number" class="form-input" id="editIncome" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gasto (R$)</label>
+                    <input type="number" class="form-input" id="editExpense" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descrição</label>
+                    <input type="text" class="form-input" id="editDescription" placeholder="Detalhes...">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" id="cancelEdit">Cancelar</button>
+                    <button type="submit" class="btn btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let calendarData = JSON.parse(localStorage.getItem('financialCalendar')) || [];
+        let editData = {};
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth() + 1;
+        let currentView = 'all';
+        let selectedYear = currentYear;
+        let selectedMonth = currentMonth;
+        let jumpModalYear = currentYear; // Temp year for modal navigation
+        let jumpModalMonth = 0; // Temp month for modal navigation
+
+        const weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+        const weekdaysShort = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const chartColors = { income: '#22c55e', expense: '#ef4444', balance: '#3b82f6' };
+
+        function initializeData() {
+            if (calendarData.length === 0) {
+                // Initialize current year + next year for robust demo
+                [currentYear, currentYear + 1].forEach(y => {
+                    for (let week = 1; week <= 52; week++) {
+                        let weekData = { weekNumber: week, year: y, startDate: getStartDateOfWeek(y, week), days: [] };
+                        for (let day = 0; day < 7; day++) {
+                            weekData.days.push({
+                                weekday: weekdays[day],
+                                date: addDaysToDate(weekData.startDate, day),
+                                income: 0, expense: 0, description: ''
+                            });
+                        }
+                        calendarData.push(weekData);
+                    }
+                });
+                saveToLocalStorage();
+            }
+        }
+
+        function getStartDateOfWeek(year, weekNumber) {
+            const date = new Date(year, 0, 1 + (weekNumber - 1) * 7);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(date.setDate(diff));
+        }
+
+        function addDaysToDate(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        function formatDate(date) {
+            if (!date) return '';
+            if (typeof date === 'string') date = new Date(date);
+            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        }
+
+        function calculateWeekTotals(week) {
+            let i = 0, e = 0;
+            week.days.forEach(day => { i += day.income; e += day.expense; });
+            return { income: i, expense: e, balance: i - e };
+        }
+
+        function filterWeeks() {
+            let weeks = calendarData;
+            
+            // Filter by Year first
+            weeks = weeks.filter(week => new Date(week.startDate).getFullYear() === selectedYear);
+
+            // Filter by View Mode
+            if (currentView === 'month' && selectedMonth > 0) {
+                weeks = weeks.filter(week => {
+                    const d = new Date(week.startDate);
+                    // Check if week starts in selected month
+                    return (d.getMonth() + 1) === selectedMonth;
+                });
+            } else if (currentView === 'quarter') {
+                const currentQuarter = Math.ceil(selectedMonth / 3);
+                weeks = weeks.filter(week => {
+                    const d = new Date(week.startDate);
+                    const q = Math.ceil((d.getMonth() + 1) / 3);
+                    return q === currentQuarter;
+                });
+            }
+            
+            return weeks;
+        }
+
+        function renderStats(weeks) {
+            let i = 0, e = 0;
+            weeks.forEach(w => { const t = calculateWeekTotals(w); i += t.income; e += t.expense; });
+            const bal = i - e;
+            document.getElementById('summaryStats').innerHTML = `
+                <div class="stat-card"><div class="stat-label">Receita</div><div class="stat-value stat-income">${formatCurrency(i)}</div></div>
+                <div class="stat-card"><div class="stat-label">Gasto</div><div class="stat-value stat-expense">${formatCurrency(e)}</div></div>
+                <div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value ${bal >= 0 ? 'stat-income' : 'stat-expense'}">${formatCurrency(bal)}</div></div>
+            `;
+        }
+
+        function renderTable() {
+            const weeks = filterWeeks();
+            renderStats(weeks);
+            const container = document.getElementById('tableContainer');
+            
+            if (weeks.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding: 40px; color: #64748b;">Nenhum dado para este período.</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th style="width:100px">Semana</th>';
+            weekdaysShort.forEach(d => html += `<th>${d}</th>`);
+            html += '<th style="width:180px">Totais</th></tr></thead><tbody>';
+
+            weeks.forEach((week, wIdx) => {
+                const totals = calculateWeekTotals(week);
+                const originalIdx = calendarData.findIndex(w => w.weekNumber === week.weekNumber && w.year === week.year);
+                
+                html += `<tr><td class="total-cell">
+                    <div class="week-header">S${week.weekNumber}</div>
+                    <div class="date-display">${formatDate(week.startDate)} - ${formatDate(addDaysToDate(week.startDate, 6))}</div>
+                </td>`;
+
+                week.days.forEach((day, dIdx) => {
+                    const isToday = new Date(day.date).toDateString() === new Date().toDateString();
+                    html += `<td class="${isToday ? 'today-cell' : ''}">
+                        <div class="day-header">${formatDate(day.date)}</div>
+                        <div class="finance-fields">
+                            <div class="field-group field-income">
+                                <div class="field-label">Rec <button class="edit-btn" onclick="openEdit(${originalIdx},${dIdx},'income')"><i class="fas fa-pen"></i></button></div>
+                                <div class="field-value">${formatCurrency(day.income)}</div>
+                            </div>
+                            <div class="field-group field-expense">
+                                <div class="field-label">Desp <button class="edit-btn" onclick="openEdit(${originalIdx},${dIdx},'expense')"><i class="fas fa-pen"></i></button></div>
+                                <div class="field-value">${formatCurrency(day.expense)}</div>
+                            </div>
+                            ${day.description ? `<div style="font-size:0.7rem; color:#94a3b8; margin-top:2px;">${day.description}</div>` : ''}
+                        </div>
+                    </td>`;
+                });
+
+                html += `<td class="total-cell">
+                    <div class="week-total">
+                        <div class="total-row"><span class="total-label">Rec:</span><span class="total-income">${formatCurrency(totals.income)}</span></div>
+                        <div class="total-row"><span class="total-label">Desp:</span><span class="total-expense">${formatCurrency(totals.expense)}</span></div>
+                        <div class="total-balance ${totals.balance >= 0 ? 'positive-balance' : 'negative-balance'}">${formatCurrency(totals.balance)}</div>
+                    </div>
+                </td></tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            renderChart(weeks);
+        }
+
+        let chartInstance = null;
+        function renderChart(weeks) {
+            const ctx = document.getElementById('overviewChart');
+            if (chartInstance) chartInstance.destroy();
+            
+            const labels = weeks.map(w => `S${w.weekNumber}`);
+            const income = weeks.map(w => calculateWeekTotals(w).income);
+            const expense = weeks.map(w => calculateWeekTotals(w).expense);
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Receita', data: income, borderColor: '#22c55e', tension: 0.3 },
+                        { label: 'Gasto', data: expense, borderColor: '#ef4444', tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } },
+                    scales: {
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        window.openEdit = (wIdx, dIdx, type) => {
+            editData = { wIdx, dIdx };
+            const day = calendarData[wIdx].days[dIdx];
+            document.getElementById('editDate').value = new Date(day.date).toLocaleDateString('pt-BR');
+            document.getElementById('editIncome').value = day.income;
+            document.getElementById('editExpense').value = day.expense;
+            document.getElementById('editDescription').value = day.description || '';
+            document.getElementById('editModal').style.display = 'flex';
+        };
+
+        function saveToLocalStorage() {
+            localStorage.setItem('financialCalendar', JSON.stringify(calendarData));
+        }
+
+        function updatePeriod() {
+            let title = `${selectedYear}`;
+            if (currentView === 'month') title = `${monthNames[selectedMonth - 1]} ${selectedYear}`;
+            else if (currentView === 'quarter') title = `Trimestre ${Math.ceil(selectedMonth/3)} - ${selectedYear}`;
+            else if (currentView === 'all') title = `Ano ${selectedYear} (Completo)`;
+            
+            document.getElementById('currentPeriod').textContent = title;
+            renderTable();
+        }
+
+        function updateYearFilter() {
+            const years = [...new Set(calendarData.map(w => w.year))].sort();
+            const sel = document.getElementById('yearFilter');
+            sel.innerHTML = years.map(y => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`).join('');
+        }
+
+        function renderMonthGrid() {
+            const grid = document.getElementById('monthGrid');
+            grid.innerHTML = '';
+            monthNames.forEach((name, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `month-btn ${idx + 1 === jumpModalMonth ? 'active' : ''}`;
+                btn.textContent = name;
+                btn.onclick = () => {
+                    jumpModalMonth = idx + 1;
+                    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeData();
+            
+            // Set initial state
+            currentView = 'month';
+            document.getElementById('viewFilter').value = 'month';
+            updateYearFilter();
+            updatePeriod();
+
+            // --- Event Listeners ---
+
+            // Filters
+            document.getElementById('yearFilter').addEventListener('change', (e) => {
+                selectedYear = parseInt(e.target.value);
+                updatePeriod();
+            });
+
+            document.getElementById('viewFilter').addEventListener('change', (e) => {
+                currentView = e.target.value;
+                updatePeriod();
+            });
+
+            // Navigation Arrows
+            document.getElementById('prevMonthBtn').onclick = () => {
+                if (currentView === 'month') {
+                    selectedMonth--; if(selectedMonth < 1) { selectedMonth = 12; selectedYear--; }
+                } else {
+                    selectedYear--;
+                }
+                updateYearFilter();
+                updatePeriod();
+            };
+            document.getElementById('nextMonthBtn').onclick = () => {
+                if (currentView === 'month') {
+                    selectedMonth++; if(selectedMonth > 12) { selectedMonth = 1; selectedYear++; }
+                } else {
+                    selectedYear++;
+                }
+                updateYearFilter();
+                updatePeriod();
+            };
+            document.getElementById('prevYearBtn').onclick = () => { selectedYear--; updateYearFilter(); updatePeriod(); };
+            document.getElementById('nextYearBtn').onclick = () => { selectedYear++; updateYearFilter(); updatePeriod(); };
+
+            // Quick Nav
+            document.getElementById('goTodayBtn').onclick = () => {
+                const now = new Date();
+                selectedYear = now.getFullYear();
+                selectedMonth = now.getMonth() + 1;
+                currentView = 'month';
+                document.getElementById('viewFilter').value = 'month';
+                updateYearFilter();
+                updatePeriod();
+            };
+            
+            document.getElementById('goCurrentMonthBtn').onclick = () => {
+                const now = new Date();
+                selectedMonth = now.getMonth() + 1;
+                currentView = 'month';
+                document.getElementById('viewFilter').value = 'month';
+                updatePeriod();
+            };
+
+            // Modal: Jump To
+            document.getElementById('jumpToBtn').onclick = () => {
+                jumpModalYear = selectedYear;
+                jumpModalMonth = selectedMonth;
+                document.getElementById('jumpYear').textContent = jumpModalYear;
+                renderMonthGrid();
+                document.getElementById('jumpModal').style.display = 'flex';
+            };
+
+            document.getElementById('closeJumpModal').onclick = () => document.getElementById('jumpModal').style.display = 'none';
+            document.getElementById('cancelJump').onclick = () => document.getElementById('jumpModal').style.display = 'none';
+            
+            document.getElementById('prevYearJump').onclick = () => { jumpModalYear--; document.getElementById('jumpYear').textContent = jumpModalYear; };
+            document.getElementById('nextYearJump').onclick = () => { jumpModalYear++; document.getElementById('jumpYear').textContent = jumpModalYear; };
+            
+            document.getElementById('goToDate').onclick = () => {
+                selectedYear = jumpModalYear;
+                selectedMonth = jumpModalMonth > 0 ? jumpModalMonth : 1;
+                currentView = 'month';
+                document.getElementById('viewFilter').value = 'month';
+                updateYearFilter();
+                updatePeriod();
+                document.getElementById('jumpModal').style.display = 'none';
+            };
+
+            // Actions
+            document.getElementById('addWeekBtn').onclick = () => {
+                const last = calendarData[calendarData.length - 1];
+                const nextDate = addDaysToDate(last.startDate, 7);
+                const nextWeekNum = last.weekNumber + 1;
+                let weekData = { weekNumber: nextWeekNum, year: nextDate.getFullYear(), startDate: nextDate, days: [] };
+                for (let i = 0; i < 7; i++) weekData.days.push({ weekday: weekdays[i], date: addDaysToDate(nextDate, i), income: 0, expense: 0, description: '' });
+                calendarData.push(weekData);
+                saveToLocalStorage();
+                updateYearFilter();
+                renderTable();
+            };
+            
+            document.getElementById('addYearBtn').onclick = () => {
+                if(confirm("Adicionar 52 semanas para o próximo ano?")) {
+                    const lastYear = Math.max(...calendarData.map(w => w.year));
+                    const newYear = lastYear + 1;
+                    for (let week = 1; week <= 52; week++) {
+                        let weekData = { weekNumber: week, year: newYear, startDate: getStartDateOfWeek(newYear, week), days: [] };
+                        for (let day = 0; day < 7; day++) {
+                            weekData.days.push({ weekday: weekdays[day], date: addDaysToDate(weekData.startDate, day), income: 0, expense: 0, description: '' });
+                        }
+                        calendarData.push(weekData);
+                    }
+                    saveToLocalStorage();
+                    updateYearFilter();
+                    alert(`Ano ${newYear} adicionado.`);
+                }
+            };
+
+            // Edit Form
+            document.getElementById('editForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const day = calendarData[editData.wIdx].days[editData.dIdx];
+                day.income = parseFloat(document.getElementById('editIncome').value) || 0;
+                day.expense = parseFloat(document.getElementById('editExpense').value) || 0;
+                day.description = document.getElementById('editDescription').value;
+                saveToLocalStorage();
+                document.getElementById('editModal').style.display = 'none';
+                renderTable();
+            });
+
+            document.getElementById('closeModal').onclick = () => document.getElementById('editModal').style.display = 'none';
+            document.getElementById('cancelEdit').onclick = () => document.getElementById('editModal').style.display = 'none';
+
+            // Exports
+            document.getElementById('exportExcelBtn').onclick = () => {
+                const weeks = filterWeeks();
+                const data = [];
+                weeks.forEach(w => {
+                    w.days.forEach(d => {
+                        data.push({
+                            Data: new Date(d.date).toLocaleDateString('pt-BR'),
+                            Semana: w.weekNumber,
+                            Dia: d.weekday,
+                            Receita: d.income,
+                            Gasto: d.expense,
+                            Descricao: d.description
+                        });
+                    });
+                });
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "EcDay");
+                XLSX.writeFile(wb, "EcDay_Financeiro.xlsx");
+            };
+            
+            document.getElementById('printBtn').onclick = () => window.print();
+        });
+    </script>
+</body>
+</html>
