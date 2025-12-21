@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>EcoLog System</title>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; height: 95vh; margin: 10px; background: #f0f0f0; }
+    h1 { font-size: 1.2em; padding-bottom: 10px; border-bottom: 1px solid #ccc; }
+    #lista { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; background: white; padding: 10px; border-radius: 5px; }
+    #lista li { margin-bottom: 5px; padding: 8px; background: #e9e9e9; border-radius: 5px; }
+    .input-area { display: flex; margin-top: 10px; }
+    #msg { flex-grow: 1; border: 1px solid #ccc; padding: 10px; border-radius: 5px 0 0 5px; }
+    #sendBtn { padding: 10px 15px; border: 1px solid #007bff; background: #007bff; color: white; cursor: pointer; border-radius: 0 5px 5px 0; }
+  </style>
+</head>
+<body>
+  <h1>Chat Simples (Firebase v10) 🔥</h1>
+  <ul id="lista"></ul>
+  <div class="input-area">
+    <input id="msg" placeholder="Digite sua mensagem..." />
+    <button id="sendBtn">Enviar</button>
+  </div>
+
+  <script type="module">
+    // NOTE: Firebase functionality has been removed from this component due to
+    // an incompatible backend configuration (Datastore Mode vs Native Mode).
+    // The UI below is for demonstration purposes only and is not persistent.
+    
+    const sendBtn = document.getElementById('sendBtn');
+    const msgInput = document.getElementById('msg');
+    const lista = document.getElementById('lista');
+
+    function addMessage() {
+      const text = msgInput.value;
+      if (!text.trim()) return;
+
+      const item = document.createElement('li');
+      item.textContent = text;
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.textContent = ` (${new Date().toLocaleTimeString('pt-BR')})`;
+      timeSpan.style.fontSize = '0.8em';
+      timeSpan.style.color = '#666';
+      item.appendChild(timeSpan);
+      
+      lista.appendChild(item);
+      lista.scrollTop = lista.scrollHeight;
+      msgInput.value = '';
+    }
+
+    sendBtn.addEventListener('click', addMessage);
+    msgInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addMessage();
+        }
+    });
+
+    const initialItem = document.createElement('li');
+    initialItem.textContent = "Funcionalidade de chat em tempo real desativada.";
+    initialItem.style.fontStyle = "italic";
+    initialItem.style.color = "#999";
+    lista.appendChild(initialItem);
+  </script>
+</body>
+</html>

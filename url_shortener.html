@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encurtador de URL Personalizado</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="url"],
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="url"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .short-url {
+            font-weight: 600;
+            color: #667eea;
+            word-break: break-all;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .copy-btn {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Encurtador de URL</h1>
+        
+        <form id="urlForm">
+            <div class="form-group">
+                <label for="originalUrl">URL Original:</label>
+                <input type="url" id="originalUrl" placeholder="https://exemplo.com/url-muito-longa..." required>
+                <div class="error" id="urlError">Por favor, insira uma URL válida</div>
+            </div>
+
+            <div class="form-group">
+                <label for="customCode">Código Personalizado (opcional):</label>
+                <input type="text" id="customCode" placeholder="meulink" maxlength="50">
+                <div class="info-text">Deixe em branco para gerar um código aleatório</div>
+                <div class="error" id="codeError">Este código já está em uso</div>
+            </div>
+
+            <button type="submit" class="btn">Encurtar URL</button>
+        </form>
+
+        <div class="result" id="result">
+            <div class="short-url" id="shortUrl"></div>
+            <button class="copy-btn" onclick="copyToClipboard()">📋 Copiar URL</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('urlForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const originalUrl = document.getElementById('originalUrl').value;
+            const customCode = document.getElementById('customCode').value;
+            
+            // Validar URL
+            if (!isValidUrl(originalUrl)) {
+                showError('urlError');
+                return;
+            }
+            
+            hideError('urlError');
+            hideError('codeError');
+            
+            // Simular requisição para o backend
+            shortenUrl(originalUrl, customCode);
+        });
+
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function shortenUrl(originalUrl, customCode) {
+            // Aqui você faria a requisição para o backend
+            // Por enquanto, vamos simular a resposta
+            
+            const baseUrl = window.location.origin;
+            const shortCode = customCode || generateRandomCode();
+            
+            // Simular delay de rede
+            setTimeout(() => {
+                const shortUrl = `${baseUrl}/${shortCode}`;
+                
+                document.getElementById('shortUrl').textContent = shortUrl;
+                document.getElementById('result').classList.add('show');
+                
+                // Rolar para o resultado
+                document.getElementById('result').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            }, 1000);
+        }
+
+        function generateRandomCode() {
+            return Math.random().toString(36).substring(2, 8);
+        }
+
+        function copyToClipboard() {
+            const shortUrl = document.getElementById('shortUrl').textContent;
+            
+            navigator.clipboard.writeText(shortUrl).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copiado!';
+                btn.style.background = '#17a2b8';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#28a745';
+                }, 2000);
+            });
+        }
+
+        function showError(errorId) {
+            document.getElementById(errorId).classList.add('show');
+        }
+
+        function hideError(errorId) {
+            document.getElementById(errorId).classList.remove('show');
+        }
+
+        // Validação em tempo real
+        document.getElementById('originalUrl').addEventListener('input', function() {
+            if (this.value && !isValidUrl(this.value)) {
+                showError('urlError');
+            } else {
+                hideError('urlError');
+            }
+        });
+    </script>
+</body>
+</html>

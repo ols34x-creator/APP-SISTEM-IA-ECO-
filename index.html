@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoLog Intelligence Pulse</title>
+    <!-- Leaflet for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <!-- PDF & JSPDF for CTe Reader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js"></script>
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <!-- YouTube Iframe API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Firebase -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script>
+      // Custom Tailwind theme configuration for a more modern dark theme
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'primary': 'rgb(var(--color-primary-val) / <alpha-value>)',
+              'secondary': 'rgb(var(--color-secondary-val) / <alpha-value>)',
+              'success': 'rgb(var(--color-success-val) / <alpha-value>)',
+              'warning': 'rgb(var(--color-warning-val) / <alpha-value>)',
+              'danger': 'rgb(var(--color-danger-val) / <alpha-value>)',
+              'light': 'rgb(var(--color-light-val) / <alpha-value>)',
+              'dark': 'rgb(var(--color-light-val) / <alpha-value>)',
+              'bg-main': 'rgb(var(--color-bg-main-val) / <alpha-value>)',
+              'bg-card': 'rgb(var(--color-bg-card-val) / <alpha-value>)',
+              'gray-text': 'rgb(var(--color-gray-text-val) / <alpha-value>)',
+              'border-color': 'rgb(var(--color-border-color-val) / <alpha-value>)',
+              'trade-primary': 'rgb(var(--color-bg-main-val) / <alpha-value>)',
+              'trade-secondary': 'rgb(var(--color-bg-card-val) / <alpha-value>)',
+              'accent': 'rgb(var(--color-secondary-val) / <alpha-value>)',
+              'completed': 'rgb(var(--color-success-val) / <alpha-value>)',
+              'delayed': 'rgb(var(--color-danger-val) / <alpha-value>)',
+              'at-risk': 'rgb(var(--color-warning-val) / <alpha-value>)',
+              'scheduled': 'rgb(var(--color-secondary-val) / <alpha-value>)',
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "chart.js": "https://aistudiocdn.com/chart.js@^4.5.1",
+    "react-chartjs-2": "https://aistudiocdn.com/react-chartjs-2@^5.3.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0"
+  }
+}
+</script>
+<style>
+:root {
+    /* Default Theme (Original) */
+    --color-primary-val: 20 184 166;
+    --color-secondary-val: 59 130 246;
+    --color-success-val: 34 197 94;
+    --color-warning-val: 245 158 11;
+    --color-danger-val: 239 68 68;
+    --color-light-val: 248 250 252;
+    --color-bg-main-val: 15 23 42;
+    --color-bg-card-val: 30 41 59;
+    --color-gray-text-val: 148 163 184;
+    --color-border-color-val: 51 65 85;
+}
+
+/* Global Styles */
+body {
+    background-color: rgb(var(--color-bg-main-val));
+    color: rgb(var(--color-gray-text-val));
+    font-family: 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Background Particles */
+#particles-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+}
+.particle {
+    position: absolute;
+    bottom: -10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    opacity: 0;
+    animation: rise 15s infinite linear;
+}
+@keyframes rise {
+    0% { transform: translateY(0); opacity: 0.7; }
+    100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+}
+
+</style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="particles-container"></div>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

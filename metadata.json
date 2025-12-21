@@ -1,0 +1,9 @@
+{
+  "name": "ecolog",
+  "description": "A comprehensive financial and operational dashboard for logistics management. Track revenue, expenses, and transport operations with detailed charts, reports, and real-time data visualization.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone",
+    "camera"
+  ]
+}

@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco.Sis - Calendário Financeiro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-light: #f8fafc;
+            --text-gray: #94a3b8;
+            --border-color: #334155;
+            --primary: #14b8a6;
+            --secondary: #3b82f6;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-gray);
+            padding: 0;
+            margin: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-card);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: var(--bg-card);
+            color: var(--text-light);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h1 i { color: var(--primary); }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            color: white;
+        }
+        
+        .btn-primary { background-color: var(--primary); }
+        .btn-primary:hover { background-color: #0d9488; }
+        
+        .btn-secondary { background-color: var(--secondary); }
+        .btn-secondary:hover { background-color: #2563eb; }
+        
+        .btn-export { background-color: var(--warning); color: #fff; }
+        .btn-export:hover { background-color: #d97706; }
+        
+        .btn-reset { background-color: var(--danger); }
+        .btn-reset:hover { background-color: #dc2626; }
+        
+        /* Navegação do Calendário */
+        .calendar-nav {
+            background-color: var(--bg-main);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .period-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-btn {
+            background: var(--bg-card);
+            color: var(--text-gray);
+            border: 1px solid var(--border-color);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: var(--border-color);
+            color: var(--text-light);
+        }
+        
+        .current-period {
+            font-size: 1.1rem;
+            font-weight: 700;
+            min-width: 180px;
+            text-align: center;
+            color: var(--text-light);
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .filter-select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-light);
+            font-size: 0.85rem;
+            cursor: pointer;
+            outline: none;
+        }
+        
+        .filter-select:focus { border-color: var(--primary); }
+        
+        /* Content Area */
+        .content-scroll {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+        
+        thead th {
+            background-color: var(--bg-main);
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-gray);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tbody td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            vertical-align: top;
+            height: 140px;
+            background-color: var(--bg-card);
+            transition: background-color 0.2s;
+        }
+        
+        tbody td:hover {
+            background-color: #273548;
+        }
+        
+        .today-cell {
+            background-color: rgba(20, 184, 166, 0.05) !important;
+            border: 2px solid var(--primary) !important;
+        }
+        
+        .week-header {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 4px;
+        }
+        
+        .date-display {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
+        }
+        
+        .finance-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .field-group {
+            padding: 6px;
+            border-radius: 4px;
+            background-color: var(--bg-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid transparent;
+        }
+        
+        .field-income { border-left-color: var(--success); }
+        .field-expense { border-left-color: var(--danger); }
+        
+        .field-label { font-size: 0.7rem; color: var(--text-gray); font-weight: 600; }
+        .field-value { font-size: 0.9rem; font-weight: 700; color: var(--text-light); }
+        
+        .edit-btn {
+            background: transparent;
+            border: none;
+            color: var(--secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 2px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        
+        .edit-btn:hover { opacity: 1; }
+        
+        .total-cell {
+            background-color: var(--bg-main);
+            width: 150px;
+        }
+        
+        .week-total {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+        
+        .total-income { color: var(--success); font-weight: 700; }
+        .total-expense { color: var(--danger); font-weight: 700; }
+        .total-balance { color: var(--text-light); font-weight: 800; font-size: 1rem; border-top: 1px dashed var(--border-color); padding-top: 5px; margin-top: 5px; }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: var(--bg-main);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-label { font-size: 0.8rem; color: var(--text-gray); margin-bottom: 5px; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-light); }
+        .stat-income { color: var(--success); }
+        .stat-expense { color: var(--danger); }
+        .stat-balance { color: var(--secondary); }
+        
+        .chart-container {
+            background-color: var(--bg-main);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            padding: 25px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+        
+        .modal-title { font-size: 1.2rem; font-weight: 700; color: var(--text-light); }
+        .close-modal { background: none; border: none; font-size: 1.5rem; color: var(--text-gray); cursor: pointer; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-gray); font-size: 0.9rem; }
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: var(--bg-main);
+            color: var(--text-light);
+            outline: none;
+        }
+        .form-input:focus { border-color: var(--primary); }
+        
+        .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-calendar-check"></i> Eco.Sis</h1>
+            <div class="controls">
+                <button class="btn btn-secondary" onclick="addYearOfWeeks()"><i class="fas fa-calendar-plus"></i> Add Ano</button>
+                <button class="btn btn-primary" onclick="addNewWeek()"><i class="fas fa-plus"></i> Semana</button>
+                <button class="btn btn-export" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+                <button class="btn btn-reset" onclick="resetData()"><i class="fas fa-trash-alt"></i> Reset</button>
+            </div>
+        </header>
+        
+        <div class="calendar-nav">
+            <div class="period-controls">
+                <button class="nav-btn" onclick="navigate('prev')"><i class="fas fa-chevron-left"></i></button>
+                <div class="current-period" id="currentPeriod">Carregando...</div>
+                <button class="nav-btn" onclick="navigate('next')"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            
+            <div class="filters">
+                <select class="filter-select" id="yearFilter" onchange="changeYear(this.value)"></select>
+                <select class="filter-select" id="viewFilter" onchange="changeView(this.value)">
+                    <option value="month">Mensal</option>
+                    <option value="quarter">Trimestral</option>
+                    <option value="all">Anual</option>
+                </select>
+                <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px;" onclick="goToToday()">Hoje</button>
+            </div>
+        </div>
+        
+        <div class="content-scroll">
+            <div class="summary-stats" id="summaryStats"></div>
+            
+            <div class="chart-container">
+                <canvas id="overviewChart" height="60"></canvas>
+            </div>
+            
+            <div class="table-container" id="tableContainer"></div>
+        </div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Editar Lançamento</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="editForm" onsubmit="saveEdit(event)">
+                <div class="form-group">
+                    <label class="form-label">Data</label>
+                    <input type="text" class="form-input" id="editDate" readonly disabled style="opacity: 0.6;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receita (R$)</label>
+                    <input type="number" class="form-input" id="editIncome" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Despesa (R$)</label>
+                    <input type="number" class="form-input" id="editExpense" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descrição / Obs</label>
+                    <input type="text" class="form-input" id="editDescription" placeholder="Detalhes...">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" style="background-color: var(--border-color);" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let calendarData = [];
+        let currentState = {
+            year: new Date().getFullYear(),
+            month: new Date().getMonth() + 1,
+            view: 'month', // 'month', 'quarter', 'all'
+            editing: null
+        };
+        
+        // Constants
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const weekdaysShort = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            updateUI();
+        });
+
+        function loadData() {
+            const stored = localStorage.getItem('financialCalendar');
+            if (stored) {
+                try {
+                    calendarData = JSON.parse(stored);
+                } catch(e) {
+                    console.error("Data error", e);
+                    initializeDefaultData();
+                }
+            } else {
+                initializeDefaultData();
+            }
+            if (!Array.isArray(calendarData) || calendarData.length === 0) {
+                 initializeDefaultData();
+            }
+            populateYearFilter();
+        }
+
+        function initializeDefaultData() {
+            calendarData = [];
+            const years = [currentState.year, currentState.year + 1];
+            years.forEach(y => createYearData(y));
+            saveData();
+        }
+        
+        function resetData() {
+            if(confirm("Tem certeza que deseja apagar todos os dados e reiniciar o calendário?")) {
+                localStorage.removeItem('financialCalendar');
+                loadData();
+                updateUI();
+            }
+        }
+
+        function createYearData(year) {
+            for (let week = 1; week <= 52; week++) {
+                const startDate = new Date(year, 0, 1 + (week - 1) * 7);
+                const day = startDate.getDay();
+                const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
+                startDate.setDate(diff);
+
+                const weekData = {
+                    id: `w-${year}-${week}-${Date.now()}`,
+                    weekNumber: week,
+                    year: year,
+                    startDate: startDate.toISOString(),
+                    days: Array.from({length: 7}, (_, i) => {
+                        const d = new Date(startDate);
+                        d.setDate(d.getDate() + i);
+                        return {
+                            date: d.toISOString(),
+                            weekday: weekdaysShort[i],
+                            income: 0,
+                            expense: 0,
+                            description: ''
+                        };
+                    })
+                };
+                calendarData.push(weekData);
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('financialCalendar', JSON.stringify(calendarData));
+        }
+
+        function updateUI() {
+            renderHeader();
+            renderTable();
+            renderStats();
+            renderChart();
+        }
+
+        function getFilteredWeeks() {
+            return calendarData.filter(w => {
+                const date = new Date(w.startDate);
+                if (date.getFullYear() !== currentState.year) return false;
+                
+                if (currentState.view === 'month') {
+                    // Check if week overlaps with selected month
+                    // Logic: week start month matches OR week end month matches
+                    const endDate = new Date(date);
+                    endDate.setDate(endDate.getDate() + 6);
+                    return (date.getMonth() + 1) === currentState.month || (endDate.getMonth() + 1) === currentState.month;
+                } else if (currentState.view === 'quarter') {
+                    const q = Math.ceil(currentState.month / 3);
+                    const wQ = Math.ceil((date.getMonth() + 1) / 3);
+                    return q === wQ;
+                }
+                return true; // 'all'
+            });
+        }
+
+        function renderHeader() {
+            const el = document.getElementById('currentPeriod');
+            if (currentState.view === 'month') {
+                el.textContent = `${months[currentState.month - 1]} ${currentState.year}`;
+            } else if (currentState.view === 'quarter') {
+                el.textContent = `Trimestre ${Math.ceil(currentState.month / 3)} - ${currentState.year}`;
+            } else {
+                el.textContent = `Ano ${currentState.year}`;
+            }
+            
+            const yearSelect = document.getElementById('yearFilter');
+            if (yearSelect.options.length > 0) {
+                 yearSelect.value = currentState.year;
+            }
+            document.getElementById('viewFilter').value = currentState.view;
+        }
+
+        function renderTable() {
+            const weeks = getFilteredWeeks();
+            const container = document.getElementById('tableContainer');
+            
+            if (weeks.length === 0) {
+                container.innerHTML = '<div style="padding:40px; text-align:center; color:#64748b;">Nenhum dado encontrado para este período.</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th style="min-width:120px">Semana</th>';
+            weekdaysShort.forEach(d => html += `<th>${d}</th>`);
+            html += '<th style="min-width:140px">Totais</th></tr></thead><tbody>';
+
+            weeks.forEach(week => {
+                const start = new Date(week.startDate);
+                const end = new Date(start);
+                end.setDate(end.getDate() + 6);
+                const totals = week.days.reduce((acc, d) => ({ inc: acc.inc + d.income, exp: acc.exp + d.expense }), { inc: 0, exp: 0 });
+                const bal = totals.inc - totals.exp;
+
+                html += `<tr>
+                    <td class="total-cell">
+                        <div class="week-header">Semana ${week.weekNumber}</div>
+                        <div class="date-display">${start.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})} - ${end.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div>
+                    </td>`;
+                
+                week.days.forEach((day, idx) => {
+                    const isToday = new Date(day.date).toDateString() === new Date().toDateString();
+                    html += `<td class="${isToday ? 'today-cell' : ''}">
+                        <div class="date-display">${new Date(day.date).getDate()}</div>
+                        <div class="finance-fields">
+                            <div class="field-group field-income">
+                                <span class="field-label">Rec</span>
+                                <div style="display:flex; align-items:center; gap:5px">
+                                    <span class="field-value">${formatCurrency(day.income)}</span>
+                                    <button class="edit-btn" onclick="openModal('${week.id}', ${idx})"><i class="fas fa-pen"></i></button>
+                                </div>
+                            </div>
+                            <div class="field-group field-expense">
+                                <span class="field-label">Desp</span>
+                                <div style="display:flex; align-items:center; gap:5px">
+                                    <span class="field-value">${formatCurrency(day.expense)}</span>
+                                    <button class="edit-btn" onclick="openModal('${week.id}', ${idx})"><i class="fas fa-pen"></i></button>
+                                </div>
+                            </div>
+                            ${day.description ? `<div style="font-size:0.75rem; color:#94a3b8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 100px;" title="${day.description}">${day.description}</div>` : ''}
+                        </div>
+                    </td>`;
+                });
+
+                html += `<td class="total-cell">
+                    <div class="week-total">
+                        <div class="total-row"><span class="total-label">Entrada</span><span class="total-income">${formatCurrency(totals.inc)}</span></div>
+                        <div class="total-row"><span class="total-label">Saída</span><span class="total-expense">${formatCurrency(totals.exp)}</span></div>
+                        <div class="total-balance" style="color: ${bal >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatCurrency(bal)}</div>
+                    </div>
+                </td></tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderStats() {
+            const weeks = getFilteredWeeks();
+            let totalInc = 0, totalExp = 0;
+            weeks.forEach(w => w.days.forEach(d => { totalInc += d.income; totalExp += d.expense; }));
+            const bal = totalInc - totalExp;
+
+            document.getElementById('summaryStats').innerHTML = `
+                <div class="stat-card">
+                    <span class="stat-label">Receita Total</span>
+                    <span class="stat-value stat-income">${formatCurrency(totalInc)}</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Despesa Total</span>
+                    <span class="stat-value stat-expense">${formatCurrency(totalExp)}</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Saldo do Período</span>
+                    <span class="stat-value ${bal >= 0 ? 'stat-balance' : 'stat-expense'}">${formatCurrency(bal)}</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Semanas</span>
+                    <span class="stat-value" style="color:var(--text-light)">${weeks.length}</span>
+                </div>
+            `;
+        }
+
+        let chartInstance = null;
+        function renderChart() {
+            const ctx = document.getElementById('overviewChart');
+            if (!ctx) return;
+            
+            const weeks = getFilteredWeeks();
+            const labels = weeks.map(w => `S${w.weekNumber}`);
+            const dataInc = weeks.map(w => w.days.reduce((a,b) => a + b.income, 0));
+            const dataExp = weeks.map(w => w.days.reduce((a,b) => a + b.expense, 0));
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Receita', data: dataInc, backgroundColor: '#22c55e', borderRadius: 4 },
+                        { label: 'Despesa', data: dataExp, backgroundColor: '#ef4444', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        // Navigation
+        function navigate(dir) {
+            if (currentState.view === 'month') {
+                currentState.month += (dir === 'next' ? 1 : -1);
+                if (currentState.month > 12) { currentState.month = 1; currentState.year++; }
+                if (currentState.month < 1) { currentState.month = 12; currentState.year--; }
+            } else if (currentState.view === 'quarter') {
+                currentState.month += (dir === 'next' ? 3 : -3);
+                if (currentState.month > 12) { currentState.month = 1; currentState.year++; }
+                if (currentState.month < 1) { currentState.month = 10; currentState.year--; }
+            } else {
+                currentState.year += (dir === 'next' ? 1 : -1);
+            }
+            updateUI();
+        }
+
+        function changeYear(val) { currentState.year = parseInt(val); updateUI(); }
+        function changeView(val) { currentState.view = val; updateUI(); }
+        function goToToday() {
+            const now = new Date();
+            currentState.year = now.getFullYear();
+            currentState.month = now.getMonth() + 1;
+            currentState.view = 'month';
+            updateUI();
+        }
+
+        function populateYearFilter() {
+            const years = [...new Set(calendarData.map(w => w.year))].sort();
+            const sel = document.getElementById('yearFilter');
+            sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+            sel.value = currentState.year;
+        }
+
+        // Modal Logic
+        function openModal(weekId, dayIndex) {
+            currentState.editing = { weekId, dayIndex };
+            const week = calendarData.find(w => w.id === weekId);
+            const day = week.days[dayIndex];
+            
+            document.getElementById('editDate').value = new Date(day.date).toLocaleDateString('pt-BR');
+            document.getElementById('editIncome').value = day.income || '';
+            document.getElementById('editExpense').value = day.expense || '';
+            document.getElementById('editDescription').value = day.description || '';
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentState.editing = null;
+        }
+
+        function saveEdit(e) {
+            e.preventDefault();
+            if (!currentState.editing) return;
+            
+            const { weekId, dayIndex } = currentState.editing;
+            const week = calendarData.find(w => w.id === weekId);
+            const day = week.days[dayIndex];
+
+            day.income = parseFloat(document.getElementById('editIncome').value) || 0;
+            day.expense = parseFloat(document.getElementById('editExpense').value) || 0;
+            day.description = document.getElementById('editDescription').value;
+
+            saveData();
+            closeModal();
+            updateUI();
+        }
+        
+        // Utils
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+        }
+
+        function addYearOfWeeks() {
+            const maxYear = Math.max(...calendarData.map(w => w.year));
+            createYearData(maxYear + 1);
+            saveData();
+            populateYearFilter();
+            alert(`Ano ${maxYear + 1} adicionado com sucesso.`);
+        }
+        
+        function addNewWeek() {
+             const last = calendarData[calendarData.length - 1];
+             const nextDate = new Date(last.startDate);
+             nextDate.setDate(nextDate.getDate() + 7);
+             const weekData = {
+                id: `w-${last.year}-${last.weekNumber + 1}-${Date.now()}`,
+                weekNumber: last.weekNumber + 1,
+                year: nextDate.getFullYear(),
+                startDate: nextDate.toISOString(),
+                days: Array.from({length: 7}, (_, i) => {
+                    const d = new Date(nextDate);
+                    d.setDate(d.getDate() + i);
+                    return { date: d.toISOString(), weekday: weekdaysShort[i], income: 0, expense: 0, description: '' };
+                })
+             };
+             calendarData.push(weekData);
+             saveData();
+             updateUI();
+        }
+
+        function exportToExcel() {
+            const weeks = getFilteredWeeks();
+            const flatData = [];
+            weeks.forEach(w => w.days.forEach(d => {
+                flatData.push({
+                    Data: new Date(d.date).toLocaleDateString('pt-BR'),
+                    Semana: w.weekNumber,
+                    Dia: d.weekday,
+                    Receita: d.income,
+                    Despesa: d.expense,
+                    Descricao: d.description
+                });
+            }));
+            const ws = XLSX.utils.json_to_sheet(flatData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Dados Financeiros");
+            XLSX.writeFile(wb, "EcoSis_Relatorio.xlsx");
+        }
+    </script>
+</body>
+</html>
