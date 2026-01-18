@@ -81,6 +81,14 @@ export const SIDEBAR_MENU_STRUCTURE: MenuSection[] = [
         ],
     },
     {
+        id: 'ecoAuto',
+        titleKey: 'ecoAuto',
+        icon: 'fa-tools',
+        items: [
+            { id: 'oficina-system', textKey: 'oficinaSystem', icon: 'fa-car-side' },
+        ],
+    },
+    {
         id: 'ecoCriati',
         titleKey: 'ECO.CRIATI',
         icon: 'fa-lightbulb',

@@ -2,17 +2,18 @@
 import { GoogleGenAI } from "@google/genai";
 
 if (!process.env.API_KEY) {
-  console.warn(
-    "API_KEY environment variable not set. AI features will not work."
-  );
+  console.warn("API_KEY environment variable not set. AI features will not work.");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+const getAiClient = () => {
+  if (!process.env.API_KEY) {
+    throw new Error("API key is not configured.");
+  }
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+};
 
 export const generateEcoLogLogo = async (): Promise<string> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API key is not configured.");
-    }
+    const ai = getAiClient();
 
     const prompt = `
         Create a professional, minimalist, and futuristic corporate logo for a company called 'EcoLog'. 
@@ -53,9 +54,7 @@ export const editImageWithGemini = async (
   mimeType: string,
   prompt: string
 ): Promise<string> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API key is not configured.");
-  }
+  const ai = getAiClient();
 
   try {
     const response = await ai.models.generateContent({
@@ -96,9 +95,7 @@ export const analyzeDocument = async (
   base64Data: string,
   mimeType: string
 ): Promise<{ fullText: string; documentType: string; keyFields: Record<string, string> }> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API key is not configured.");
-  }
+  const ai = getAiClient();
 
   try {
     const prompt = `

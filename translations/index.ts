@@ -15,6 +15,8 @@ export const translations = {
     accountDelays: 'Atrasos de Contas',
     interestReports: 'Juros por Atraso',
     reimbursement: 'Justificativa',
+    ecoAuto: 'Eco.Auto',
+    oficinaSystem: 'Sistema Oficina',
     // ...
   },
   en: {
