@@ -40,6 +40,7 @@ import EcoCriati from './EcoCriati';
 import FuturoDebitos from './FuturoDebitos';
 import EcoPlay from './EcoPlay';
 import BrandingStudio from './BrandingStudio';
+import WorkshopSystem from './WorkshopSystem';
 
 const AccessDenied = () => (
     <div className="flex flex-col items-center justify-center h-[60vh] text-center p-10 animate-fade-in">
@@ -140,6 +141,9 @@ const FeatureTabs: React.FC = () => {
 
             {/* Eco.Sites */}
             <div className={getTabClassName('eco-sites')}><EcoSites /></div>
+
+            {/* Eco.Auto */}
+            <div className={getTabClassName('oficina-system')}><WorkshopSystem /></div>
 
             {/* Eco.Tech */}
             <div className={getTabClassName('eco-files')}><EcoFiles /></div>

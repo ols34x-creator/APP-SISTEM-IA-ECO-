@@ -90,7 +90,7 @@ export interface OperationalEvent {
     allDay?: boolean;
 }
 
-export type TabId = 'dashboard' | 'operational-calendar' | 'eco-sis' | 'transactions' | 'receipts' | 'financial-entries' | 'faturamento-receita' | 'custos-fixos' | 'custos-variaveis' | 'advnc-contabil' | 'general-approvals' | 'analytical-dashboard' | 'operational-report' | 'cost-radar' | 'account-delays' | 'interest-reports' | 'reimbursement' | 'freight-quotation' | 'freight-sheet' | 'briefing' | 'briefing-feedback' | 'fleet-control' | 'port-checklist' | 'cte-reader' | 'container-receipt' | 'gestao-predial' | 'registration-control' | 'compliance' | 'eco-sites' | 'eco-files' | 'eco-drive' | 'eco-ia' | 'ocr-reader' | 'history' | 'user-management' | 'collaborator-registration' | 'eco-note' | 'eco-agenda' | 'dados-gerais-pg' | 'conexao' | 'eco-criati' | 'futuro-debitos' | 'eco-play' | 'eco-branding';
+export type TabId = 'dashboard' | 'operational-calendar' | 'eco-sis' | 'transactions' | 'receipts' | 'financial-entries' | 'faturamento-receita' | 'custos-fixos' | 'custos-variaveis' | 'advnc-contabil' | 'general-approvals' | 'analytical-dashboard' | 'operational-report' | 'cost-radar' | 'account-delays' | 'interest-reports' | 'reimbursement' | 'freight-quotation' | 'freight-sheet' | 'briefing' | 'briefing-feedback' | 'fleet-control' | 'port-checklist' | 'cte-reader' | 'container-receipt' | 'gestao-predial' | 'registration-control' | 'compliance' | 'eco-sites' | 'oficina-system' | 'eco-files' | 'eco-drive' | 'eco-ia' | 'ocr-reader' | 'history' | 'user-management' | 'collaborator-registration' | 'eco-note' | 'eco-agenda' | 'dados-gerais-pg' | 'conexao' | 'eco-criati' | 'futuro-debitos' | 'eco-play' | 'eco-branding';
 
 export interface CalendarEvent {
     id: number;
